@@ -1,0 +1,71 @@
+#define NEAR1 70
+#define NEAR2 40
+#define INPUT_WHITECOLOR 6
+#define INPUT_BLACKCOLOR 1
+
+int dir=0,aux=0,aux2=0,cv,a,b,c;
+string cname; // A � o motor sozinho
+
+task luz()
+{
+    SetSensorColorFull(IN_3);
+    while(true)
+    {
+       ReadSensorColorEx(IN_3,cv,a,b,c);
+       if(cv == INPUT_WHITECOLOR)
+       {
+           cname = "branco" ;
+           aux=1;
+       }
+       else
+       {
+           cname = "PRETO" ;
+           aux=0;
+       }
+
+       TextOut(0,LCD_LINE1,cname);
+    }
+}
+
+task RUN()
+{
+     SetSensorUltrasonic(IN_2);   // configura o sensor ultrassonico na porta2
+     //SetSensorColorFull(IN_3); //configura sensor na porta 3
+
+           Wait(3000);  // espera 3 segundos
+           OnRevReg(OUT_ABC,100,OUT_REGMODE_SPEED);  //distancia a ser percorrida
+           Wait(1000);
+           Off(OUT_ABC);
+           OnRevReg(OUT_A,100,OUT_REGMODE_SPEED);  //curva a ser feita
+           OnFwdReg(OUT_BC,100,OUT_REGMODE_SPEED);
+           Wait(1050);
+           Off(OUT_ABC);
+           while(true)
+           {
+                  while(aux==0 && SensorUS(IN_2)<NEAR1 && SensorUS(IN_2)>NEAR2)
+                  {
+                       Off(OUT_ABC);
+                       OnRevReg(OUT_ABC,80,OUT_REGMODE_SPEED);
+                  }
+                  while(aux==1 && SensorUS(IN_2)<=NEAR2 && aux2==0)
+                  {
+                       OnRevReg(OUT_ABC,100,OUT_REGMODE_SPEED);
+
+                  }
+                  if(aux>0)
+                  {
+                        OnFwdReg(OUT_ABC,100,OUT_REGMODE_SPEED);
+                        Wait(1000);
+                        //Off(OUT_ABC);
+                  }
+                   OnRevReg(OUT_A,40,OUT_REGMODE_SPEED);
+                   OnFwdReg(OUT_BC,40,OUT_REGMODE_SPEED);    // da uma volta procurando
+                   until(SensorUS(IN_2)<NEAR1);
+                   //Off(OUT_ABC);
+           }
+}
+
+task main()
+{
+     Precedes(RUN, luz);
+}
